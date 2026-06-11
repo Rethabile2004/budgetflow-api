@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37203.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "budgetflow-api", "budgetflow-api\budgetflow-api.csproj", "{1DE3C291-64DF-4433-A116-8840E37A5009}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1DE3C291-64DF-4433-A116-8840E37A5009}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DE3C291-64DF-4433-A116-8840E37A5009}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DE3C291-64DF-4433-A116-8840E37A5009}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DE3C291-64DF-4433-A116-8840E37A5009}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BEE44C18-9F93-4937-AD64-3A7F108B1F5F}
+	EndGlobalSection
+EndGlobal
