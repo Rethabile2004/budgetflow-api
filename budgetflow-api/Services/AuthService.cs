@@ -2,6 +2,7 @@
 using BudgetFlow.API.DTOs.Auth;
 using BudgetFlow.API.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -33,11 +34,30 @@ namespace BudgetFlow.API.Services
             return await GenerateAuthResponse(user);
         }
 
-        Task<AuthResponseDto> IAuthService.RefreshTokenAsync(string refreshToken)
+        public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
         {
-            throw new NotImplementedException();
+            // find the refresh token in db
+            var storedToken = await _context.RefreshTokens.Include(r => r.User).
+                FirstOrDefaultAsync(r => r.Token == refreshToken) ?? throw new Exception("Invalid refresh token.");
+            if (storedToken.IsRevoked)
+                throw new Exception("Refresh token has been revoked.");
+            if (storedToken.ExpiresAt < DateTime.UtcNow)
+                throw new Exception("Refresh token has expired.");
+            // remove old token and issue a new one
+            storedToken.IsRevoked = true;
+            await _context.SaveChangesAsync();
+
+            return await GenerateAuthResponse(storedToken.User);
         }
 
+        public async Task RevokeTokenAsync(string refreshToken)
+        {
+            var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(
+                r => r.Token == refreshToken)?? throw new Exception("Token not found.");
+
+            storedToken.IsRevoked = true;
+            await _context.SaveChangesAsync();
+        }
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -57,11 +77,6 @@ namespace BudgetFlow.API.Services
             return await GenerateAuthResponse(user);
         }
 
-
-        Task IAuthService.RevokeTokenAsync(string refreshToken)
-        {
-            throw new NotImplementedException();
-        }
         private (string Token, DateTime ExpiresAt) GenerateJwt(AppUser user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
