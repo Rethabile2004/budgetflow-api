@@ -10,7 +10,7 @@ namespace BudgetFlow.API.Models
         public string Name { get; set; } = string.Empty;
         public CategoryType Type { get; set; }
 
-        // Foreign key — every category belongs to a user
+        // Foreign key every category belongs to a user
         public string UserId { get; set; } = string.Empty;
         public AppUser User { get; set; } = null!;
 
