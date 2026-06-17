@@ -10,10 +10,10 @@ namespace BudgetFlow.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class CategoryController:ControllerBase
+    public class CategoriesController:ControllerBase
     {
         private readonly ICategoryService _service;
-        public CategoryController(ICategoryService service)
+        public CategoriesController(ICategoryService service)
         {
             _service = service;
         }
