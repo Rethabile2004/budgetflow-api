@@ -31,6 +31,18 @@ namespace BudgetFlow.API.Data
                 .Property(r => r.TotalExpenses).HasPrecision(18, 2);
             builder.Entity<MonthlyReport>()
                 .Property(r => r.Balance).HasPrecision(18, 2);
+
+            builder.Entity<Transaction>()
+                .HasOne(t => t.Category)
+                .WithMany(c => c.Transactions)
+                .HasForeignKey(t => t.CategoryId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Budget>()
+                .HasOne(b => b.Category)
+                .WithMany(c => c.Budgets)
+                .HasForeignKey(b => b.CategoryId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

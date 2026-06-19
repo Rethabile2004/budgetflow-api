@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BudgetFlow.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260617201204_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260619135008_AddSummary")]
+    partial class AddSummary
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -406,7 +406,7 @@ namespace BudgetFlow.API.Migrations
                     b.HasOne("BudgetFlow.API.Models.Category", "Category")
                         .WithMany("Budgets")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BudgetFlow.API.Models.AppUser", "User")
@@ -458,7 +458,7 @@ namespace BudgetFlow.API.Migrations
                     b.HasOne("BudgetFlow.API.Models.Category", "Category")
                         .WithMany("Transactions")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BudgetFlow.API.Models.AppUser", "User")

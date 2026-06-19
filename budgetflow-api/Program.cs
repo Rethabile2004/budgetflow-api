@@ -46,7 +46,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Allows services to access the current HTTP request (needed to extract UserId from JWT)
+// HTTP context access for extracting UserId from JWT inside services
 builder.Services.AddHttpContextAccessor();
 
 // Services
@@ -54,6 +54,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<ISummaryService, SummaryService>();
 
 builder.Services.AddControllers();
 
