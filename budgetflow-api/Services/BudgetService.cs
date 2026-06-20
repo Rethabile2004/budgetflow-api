@@ -1,5 +1,6 @@
 ﻿using BudgetFlow.API.Data;
 using BudgetFlow.API.DTOs.Budget;
+using BudgetFlow.API.Exceptions;
 using BudgetFlow.API.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -18,7 +19,7 @@ namespace BudgetFlow.API.Services
         }
 
         private string GetUserId() => _httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
-                        ??throw new Exception("User not authenticated");
+                        ??throw new UnauthorizedException("User not authenticated");
         // calculates how much has been spent against a budget
         private async Task<decimal> GetSpentAmount(string userId, int categoryId, int month, int year)
         {
@@ -33,14 +34,14 @@ namespace BudgetFlow.API.Services
             var category = await _context.Categories.FirstOrDefaultAsync(c =>
                                         c.UserId == userId
                                         && c.Id==dto.CategoryId
-                                        ) ?? throw new Exception("Category not found.");
+                                        ) ?? throw new NotFoundException("Category not found.");
             var exists = await _context.Budgets.AnyAsync(b => 
                                         b.UserId == userId
                                         &&b.Month==dto.Month
                                         &&b.CategoryId==dto.CategoryId
                                         &&b.Year==dto.Year);
             if (exists)
-                throw new Exception("Budget for this category and months already exists.");
+                throw new BadRequestException("Budget for this category and months already exists.");
 
             var budget = new Budget
             {
@@ -73,7 +74,7 @@ namespace BudgetFlow.API.Services
             var userId = GetUserId();
             var budget= await _context.Budgets.FirstOrDefaultAsync(b=>
                               b.Id==id&&b.UserId==userId)
-                                ?? throw new Exception("Budget not found.");
+                                ?? throw new NotFoundException("Budget not found.");
             _context.Budgets.Remove(budget);
             await _context.SaveChangesAsync();
         }
@@ -110,7 +111,7 @@ namespace BudgetFlow.API.Services
 
             var budget = await _context.Budgets.Include(b => b.Category).
                             FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId)
-                            ?? throw new Exception("Budget not found.");
+                            ?? throw new NotFoundException("Budget not found.");
             var spent = await GetSpentAmount(userId,budget.CategoryId,budget.Month,budget.Year);
 
             return new BudgetResponseDto
@@ -131,7 +132,7 @@ namespace BudgetFlow.API.Services
             var userId = GetUserId();
             var budget = await _context.Budgets.Include(b => b.Category)
                             .FirstOrDefaultAsync(b => b.Id == id&&b.UserId==userId) ??
-                                throw new Exception("Budget not found.");
+                                throw new NotFoundException("Budget not found.");
             budget.LimitAmount = dto.LimitAmount;
             await _context.SaveChangesAsync();
 

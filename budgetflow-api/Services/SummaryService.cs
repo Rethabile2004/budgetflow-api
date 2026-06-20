@@ -1,5 +1,6 @@
 ﻿using BudgetFlow.API.Data;
 using BudgetFlow.API.DTOs.Summary;
+using BudgetFlow.API.Exceptions;
 using BudgetFlow.API.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -16,7 +17,7 @@ namespace BudgetFlow.API.Services
             _httpContext = httpContext;
         }
         private string GetUserId() => _httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
-                    ?? throw new Exception("User not authenticated.");
+                    ?? throw new UnauthorizedException("User not authenticated.");
         public async Task<SummaryResponseDto> GetSummaryAsync(SummaryQueryDto query)
         {
             var userId = GetUserId();

@@ -1,9 +1,9 @@
 ﻿using BudgetFlow.API.Data;
 using BudgetFlow.API.DTOs.Auth;
+using BudgetFlow.API.Exceptions;
 using BudgetFlow.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -27,10 +27,10 @@ namespace BudgetFlow.API.Services
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email)
-                ?? throw new Exception("Invalid Email or Password.");
+                ?? throw new UnauthorizedException("Invalid Email or Password.");
             var validPassword = await _userManager.CheckPasswordAsync(user, dto.Password);
             if (!validPassword)
-                throw new Exception("Invalid Email or Password.");
+                throw new UnauthorizedException("Invalid Email or Password.");
             return await GenerateAuthResponse(user);
         }
 
@@ -38,11 +38,11 @@ namespace BudgetFlow.API.Services
         {
             // find the refresh token in db
             var storedToken = await _context.RefreshTokens.Include(r => r.User).
-                FirstOrDefaultAsync(r => r.Token == refreshToken) ?? throw new Exception("Invalid refresh token.");
+                FirstOrDefaultAsync(r => r.Token == refreshToken) ?? throw new UnauthorizedException("Invalid refresh token.");
             if (storedToken.IsRevoked)
-                throw new Exception("Refresh token has been revoked.");
+                throw new UnauthorizedException("Refresh token has been revoked.");
             if (storedToken.ExpiresAt < DateTime.UtcNow)
-                throw new Exception("Refresh token has expired.");
+                throw new UnauthorizedException("Refresh token has expired.");
             // remove old token and issue a new one
             storedToken.IsRevoked = true;
             await _context.SaveChangesAsync();
@@ -53,7 +53,7 @@ namespace BudgetFlow.API.Services
         public async Task RevokeTokenAsync(string refreshToken)
         {
             var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(
-                r => r.Token == refreshToken)?? throw new Exception("Token not found.");
+                r => r.Token == refreshToken)?? throw new NotFoundException("Token not found.");
 
             storedToken.IsRevoked = true;
             await _context.SaveChangesAsync();
@@ -63,7 +63,7 @@ namespace BudgetFlow.API.Services
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
             {
-                throw new Exception("Email already in use.");
+                throw new UnauthorizedException("Email already in use.");
             }
             var user = new AppUser
             {
@@ -73,7 +73,7 @@ namespace BudgetFlow.API.Services
             };
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+                throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
             return await GenerateAuthResponse(user);
         }
 
@@ -91,7 +91,7 @@ namespace BudgetFlow.API.Services
             };
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audiance"],
+                audience: _config["Jwt:Audience"],
                 claims: claims,
                 signingCredentials: creds,
                 expires: expiresAt

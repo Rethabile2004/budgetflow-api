@@ -1,6 +1,7 @@
 ﻿using BudgetFlow.API.Data;
 using BudgetFlow.API.DTOs.Common;
 using BudgetFlow.API.DTOs.Transaction;
+using BudgetFlow.API.Exceptions;
 using BudgetFlow.API.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -21,7 +22,7 @@ namespace BudgetFlow.API.Services
             var userId = GetUserId();
             // verify if the category belongs to the user or even exists
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == dto.CategoryId && c.UserId == userId)
-                ?? throw new Exception("Category not found.");
+                ?? throw new NotFoundException("Category not found.");
 
             var transaction = new Transaction
             {
@@ -48,14 +49,14 @@ namespace BudgetFlow.API.Services
         }
         private string GetUserId() => _httpContext.HttpContext!.User.
             FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new Exception("User not authenticated.");
+            ?? throw new UnauthorizedException("User not authenticated.");
         public async Task DeleteAsync(int id)
         {
             var userId = GetUserId();
 
             var transaction = await _context.Transactions.FirstOrDefaultAsync(t =>
                 t.Id == id && t.UserId == userId) ?? throw 
-                    new Exception("Transaction not found.");
+                    new NotFoundException("Transaction not found.");
 
             _context.Transactions.Remove(transaction);
             await _context.SaveChangesAsync();
@@ -77,14 +78,14 @@ namespace BudgetFlow.API.Services
             if (queryDto.Type.HasValue)
                 queryable = queryable.Where(t => t.Category.Type == queryDto.Type.Value);
             if (queryDto.CategoryId.HasValue)
-                queryable = queryable.Where(t => t.CategoryId >= queryDto.CategoryId.Value);
+                queryable = queryable.Where(t => t.CategoryId == queryDto.CategoryId.Value);
 
             // count total
             var totalCount = await queryable.CountAsync();
 
             // apply pagination
             var items = await queryable.OrderByDescending(t => t.Date).
-                Skip((queryDto.PageSize - 1) * queryDto.PageSize).Take(queryDto.PageSize).
+                Skip((queryDto.Page - 1) * queryDto.PageSize).Take(queryDto.PageSize).
                 Select(t => new TransactionResponseDto
                 {
                     Amount = t.Amount,
@@ -111,7 +112,7 @@ namespace BudgetFlow.API.Services
 
             var transaction = await _context.Transactions.Include(t => t.Category).
                 FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId)
-                ?? throw new Exception("Transaction not found.");
+                ?? throw new NotFoundException("Transaction not found.");
 
             return new TransactionResponseDto
             {
@@ -130,11 +131,11 @@ namespace BudgetFlow.API.Services
             var userId = GetUserId();
 
             var transaction = await _context.Transactions.FirstOrDefaultAsync(
-                        t => t.Id == id && t.UserId == userId) ?? throw new Exception("Transaction not found.");
+                        t => t.Id == id && t.UserId == userId) ?? throw new NotFoundException("Transaction not found.");
             // verify if the category belongs to this user
             var category= await _context.Categories.FirstOrDefaultAsync(
                     t=>t.Id==dto.CategoryId && t.UserId == userId)
-                ?? throw new Exception("Transaction not found.");
+                ?? throw new BadRequestException("Invalid category id.");
 
             transaction.Description = dto.Description;
             transaction.Amount = dto.Amount;

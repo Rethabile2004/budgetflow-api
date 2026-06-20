@@ -1,87 +1,55 @@
 ﻿using BudgetFlow.API.DTOs.Category;
 using BudgetFlow.API.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using System.Runtime.CompilerServices;
 
 namespace BudgetFlow.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/categories")]
     [Authorize]
-    public class CategoriesController:ControllerBase
+    public class CategoriesController : ControllerBase
     {
-        private readonly ICategoryService _service;
-        public CategoriesController(ICategoryService service)
+        private readonly ICategoryService _categoryService;
+
+        public CategoriesController(ICategoryService categoryService)
         {
-            _service = service;
+            _categoryService = categoryService;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var result = await _service.GetAllAsync();
-                return Ok(result);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _categoryService.GetAllAsync();
+            return Ok(result);
         }
+
         [HttpGet("{id}")]
-        public async Task<IActionResult>GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            try
-            {
-                var result = await _service.GetByIdAsync(id);
-                return Ok(result);
-            }
-            catch(Exception ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            var result = await _categoryService.GetByIdAsync(id);
+            return Ok(result);
         }
+
         [HttpPost]
         public async Task<IActionResult> Create(CreateCategoryDto dto)
         {
-            try
-            {
-                var result = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new {id=result.Id},result);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _categoryService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id,UpdateCategoryDto dto)
+        public async Task<IActionResult> Update(int id, UpdateCategoryDto dto)
         {
-            try
-            {
-                var result = await _service.UpdateAsync(id,dto);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _categoryService.UpdateAsync(id, dto);
+            return Ok(result);
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                await _service.DeleteAsync(id);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            await _categoryService.DeleteAsync(id);
+            return NoContent();
         }
-
     }
 }
