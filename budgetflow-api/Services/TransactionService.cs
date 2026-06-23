@@ -12,15 +12,20 @@ namespace BudgetFlow.API.Services
     {
         private readonly IHttpContextAccessor _httpContext;
         private readonly AppDbContext _context;
+
         public TransactionService(AppDbContext context, IHttpContextAccessor httpContext)
         {
-            _httpContext= httpContext;
+            _httpContext = httpContext;
             _context = context;
         }
+
+        private string GetUserId() => _httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedException("User not authenticated.");
+
         async Task<TransactionResponseDto> ITransactionService.CreateAsync(CreateTransactionDto dto)
         {
             var userId = GetUserId();
-            // verify if the category belongs to the user or even exists
+
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == dto.CategoryId && c.UserId == userId)
                 ?? throw new NotFoundException("Category not found.");
 
@@ -29,7 +34,7 @@ namespace BudgetFlow.API.Services
                 Amount = dto.Amount,
                 CategoryId = dto.CategoryId,
                 Description = dto.Description,
-                Date = dto.Date,                
+                Date = dto.Date,
                 UserId = userId,
             };
 
@@ -38,25 +43,22 @@ namespace BudgetFlow.API.Services
 
             return new TransactionResponseDto
             {
-                Amount=transaction.Amount,
-                CategoryId=transaction.CategoryId,
-                CategoryName=transaction.Category.Name,
-                CategoryType=transaction.Category.Type,
-                Date=transaction.Date,
-                Description=transaction.Description,
-                Id = transaction.Id               
+                Amount = transaction.Amount,
+                CategoryId = transaction.CategoryId,
+                CategoryName = category.Name,
+                CategoryType = category.Type,
+                Date = transaction.Date,
+                Description = transaction.Description,
+                Id = transaction.Id
             };
         }
-        private string GetUserId() => _httpContext.HttpContext!.User.
-            FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new UnauthorizedException("User not authenticated.");
+
         public async Task DeleteAsync(int id)
         {
             var userId = GetUserId();
 
             var transaction = await _context.Transactions.FirstOrDefaultAsync(t =>
-                t.Id == id && t.UserId == userId) ?? throw 
-                    new NotFoundException("Transaction not found.");
+                t.Id == id && t.UserId == userId) ?? throw new NotFoundException("Transaction not found.");
 
             _context.Transactions.Remove(transaction);
             await _context.SaveChangesAsync();
@@ -66,13 +68,10 @@ namespace BudgetFlow.API.Services
         {
             var userId = GetUserId();
 
-            // base query
-            var queryable = _context.Transactions.Include(t => t.Category).
-                Where(t => t.UserId == userId);
+            var queryable = _context.Transactions.Where(t => t.UserId == userId);
 
-            // applying filters
-            if(queryDto.From.HasValue)
-                queryable=queryable.Where(t=>t.Date>=queryDto.From.Value);
+            if (queryDto.From.HasValue)
+                queryable = queryable.Where(t => t.Date >= queryDto.From.Value);
             if (queryDto.To.HasValue)
                 queryable = queryable.Where(t => t.Date <= queryDto.To.Value);
             if (queryDto.Type.HasValue)
@@ -80,13 +79,15 @@ namespace BudgetFlow.API.Services
             if (queryDto.CategoryId.HasValue)
                 queryable = queryable.Where(t => t.CategoryId == queryDto.CategoryId.Value);
 
-            // count total
             var totalCount = await queryable.CountAsync();
 
-            // apply pagination
-            var items = await queryable.OrderByDescending(t => t.Date).
-                Skip((queryDto.Page - 1) * queryDto.PageSize).Take(queryDto.PageSize).
-                Select(t => new TransactionResponseDto
+            var items = await queryable
+                // Added a secondary sorting constraint ThenByDescending(t => t.Id)
+                .OrderByDescending(t => t.Date)
+                .ThenByDescending(t => t.Id)
+                .Skip((queryDto.Page - 1) * queryDto.PageSize)
+                .Take(queryDto.PageSize)
+                .Select(t => new TransactionResponseDto
                 {
                     Amount = t.Amount,
                     CategoryId = t.CategoryId,
@@ -99,31 +100,31 @@ namespace BudgetFlow.API.Services
 
             return new PagedResult<TransactionResponseDto>
             {
-                Items=items,
-                Page=queryDto.Page,
-                PageSize=queryDto.PageSize,
-                TotalCount=totalCount
+                Items = items,
+                Page = queryDto.Page,
+                PageSize = queryDto.PageSize,
+                TotalCount = totalCount
             };
         }
 
         public async Task<TransactionResponseDto> GetByIdAsync(int id)
         {
             var userId = GetUserId();
+            var transaction = await _context.Transactions
+                .Where(t => t.Id == id && t.UserId == userId)
+                .Select(t => new TransactionResponseDto
+                {
+                    Id = t.Id,
+                    Description = t.Description,
+                    Amount = t.Amount,
+                    Date = t.Date,
+                    CategoryId = t.CategoryId,
+                    CategoryName = t.Category.Name,
+                    CategoryType = t.Category.Type
+                })
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Transaction not found.");
 
-            var transaction = await _context.Transactions.Include(t => t.Category).
-                FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId)
-                ?? throw new NotFoundException("Transaction not found.");
-
-            return new TransactionResponseDto
-            {
-                Id = transaction.Id,
-                Description = transaction.Description,
-                Amount = transaction.Amount,
-                Date = transaction.Date,
-                CategoryId = transaction.CategoryId,
-                CategoryName = transaction.Category.Name,
-                CategoryType = transaction.Category.Type
-            };
+            return transaction;
         }
 
         public async Task<TransactionResponseDto> UpdateAsync(int id, UpdateTransactionDto dto)
@@ -132,9 +133,9 @@ namespace BudgetFlow.API.Services
 
             var transaction = await _context.Transactions.FirstOrDefaultAsync(
                         t => t.Id == id && t.UserId == userId) ?? throw new NotFoundException("Transaction not found.");
-            // verify if the category belongs to this user
-            var category= await _context.Categories.FirstOrDefaultAsync(
-                    t=>t.Id==dto.CategoryId && t.UserId == userId)
+
+            var category = await _context.Categories.FirstOrDefaultAsync(
+                    t => t.Id == dto.CategoryId && t.UserId == userId)
                 ?? throw new BadRequestException("Invalid category id.");
 
             transaction.Description = dto.Description;
@@ -151,8 +152,8 @@ namespace BudgetFlow.API.Services
                 Amount = transaction.Amount,
                 Date = transaction.Date,
                 CategoryId = transaction.CategoryId,
-                CategoryName = transaction.Category.Name,
-                CategoryType = transaction.Category.Type
+                CategoryName = category.Name,
+                CategoryType = category.Type
             };
         }
     }

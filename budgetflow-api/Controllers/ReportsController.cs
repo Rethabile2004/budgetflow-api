@@ -6,7 +6,7 @@ namespace BudgetFlow.API.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/reports")]
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _service;

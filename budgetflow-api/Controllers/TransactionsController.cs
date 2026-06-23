@@ -24,7 +24,7 @@ namespace BudgetFlow.API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetTransactionById")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _transactionService.GetByIdAsync(id);
@@ -35,7 +35,8 @@ namespace BudgetFlow.API.Controllers
         public async Task<IActionResult> Create(CreateTransactionDto dto)
         {
             var result = await _transactionService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+
+            return CreatedAtRoute("GetTransactionById", new { id = result.Id }, result);
         }
 
         [HttpPut("{id}")]

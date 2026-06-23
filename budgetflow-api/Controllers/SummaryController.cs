@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BudgetFlow.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/summary")]
     [Authorize]
     public class SummaryController:ControllerBase
     {

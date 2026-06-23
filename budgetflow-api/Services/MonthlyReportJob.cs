@@ -34,8 +34,9 @@ namespace BudgetFlow.API.Services
             if (exists) return;
 
             var transactions = await _context.Transactions
-                .Include(t=>t.Category)
-                .Where(t => t.UserId == userId).ToListAsync();
+                .Include(t => t.Category)
+                .Where(t => t.UserId == userId && t.Date.Month == month && t.Date.Year == year) // filter to target month only
+                .ToListAsync();
 
             var totalIncome = transactions.Where(t => t.Category.Type == CategoryType.Income).Sum(t => t.Amount);
             var totalExpense = transactions.Where(t => t.Category.Type == CategoryType.Expense).Sum(t => t.Amount);
@@ -46,10 +47,11 @@ namespace BudgetFlow.API.Services
                                 new
                                 {
                                     CategoryId = g.Key.CategoryId,
-                                    CategoryName = g.Key.Type,
+                                    CategoryName = g.Key.Name,
                                     Type = g.Key.Type.ToString(),
                                     Total = g.Sum(t => t.Amount)
                                 }).ToList();
+
             var report = new MonthlyReport
             {
                 Balance= totalIncome-totalExpense,
