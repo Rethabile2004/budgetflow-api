@@ -2,12 +2,14 @@
 using BudgetFlow.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BudgetFlow.API.Controllers
 {
     [ApiController]
     [Route("api/categories")]
     [Authorize]
+    [EnableRateLimiting("read")]
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -32,6 +34,7 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("write")]
         public async Task<IActionResult> Create(CreateCategoryDto dto)
         {
             var result = await _categoryService.CreateAsync(dto);
@@ -39,6 +42,7 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [EnableRateLimiting("write")]
         public async Task<IActionResult> Update(int id, UpdateCategoryDto dto)
         {
             var result = await _categoryService.UpdateAsync(id, dto);
@@ -46,6 +50,7 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [EnableRateLimiting("write")]
         public async Task<IActionResult> Delete(int id)
         {
             await _categoryService.DeleteAsync(id);

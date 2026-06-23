@@ -2,12 +2,14 @@
 using BudgetFlow.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BudgetFlow.API.Controllers
 {
     [ApiController]
     [Route("api/budgets")]
     [Authorize]
+    [EnableRateLimiting("read")]
     public class BudgetsController : ControllerBase
     {
         private readonly IBudgetService _budgetService;
@@ -32,6 +34,7 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("write")]
         public async Task<IActionResult> Create(CreateBudgetDto dto)
         {
             var result = await _budgetService.CreateAsync(dto);
@@ -40,6 +43,7 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [EnableRateLimiting("write")]
         public async Task<IActionResult> Update(int id, UpdateBudgetDto dto)
         {
             var result = await _budgetService.UpdateAsync(id, dto);
@@ -47,6 +51,7 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [EnableRateLimiting("write")]
         public async Task<IActionResult> Delete(int id)
         {
             await _budgetService.DeleteAsync(id);

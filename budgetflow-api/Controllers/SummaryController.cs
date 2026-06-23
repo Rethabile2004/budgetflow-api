@@ -2,12 +2,14 @@
 using BudgetFlow.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BudgetFlow.API.Controllers
 {
     [ApiController]
     [Route("api/summary")]
     [Authorize]
+    [EnableRateLimiting("read")]
     public class SummaryController:ControllerBase
     {
         private readonly ISummaryService _summaryService;

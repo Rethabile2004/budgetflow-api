@@ -1,12 +1,14 @@
 ﻿using BudgetFlow.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BudgetFlow.API.Controllers
 {
     [ApiController]
     [Authorize]
     [Route("api/reports")]
+    [EnableRateLimiting("read")]
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _service;
